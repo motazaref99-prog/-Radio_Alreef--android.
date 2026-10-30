@@ -36,6 +36,7 @@ jobs:
 
       - name: Build Android APK
         run: |
+         sed -i 's/VERSION_1_8/VERSION_17/g' project/radio_alreef_android/app/build.gradle.kts
           gradle -p project/radio_alreef_android assembleDebug
 
       - name: Upload APK
