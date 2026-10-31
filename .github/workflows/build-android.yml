@@ -1,3 +1,4 @@
+
 name: Build Radio Alreef APK
 
 on:
@@ -34,38 +35,51 @@ jobs:
           mkdir -p project
           unzip -q Radio_Alreef_Android_Prototype_v0.5_SectionIdentity.zip -d project
 
-      - name: Align Java and Kotlin JVM targets
+      - name: Fix JVM targets and build APK
         shell: bash
         run: |
           APP_GRADLE="project/radio_alreef_android/app/build.gradle.kts"
           test -f "$APP_GRADLE"
-          python3 - <<'PY'
-          from pathlib import Path
+
+          python3 - "$APP_GRADLE" <<'PY'
+          import sys
           import re
+          from pathlib import Path
 
-          p = Path("project/radio_alreef_android/app/build.gradle.kts")
+          p = Path(sys.argv[1])
           s = p.read_text()
-          s = re.sub(r'(sourceCompatibility\\s*=\\s*JavaVersion\\.)VERSION_1_8', r'\\1VERSION_17', s)
-          s = re.sub(r'(targetCompatibility\\s*=\\s*JavaVersion\\.)VERSION_1_8', r'\\1VERSION_17', s)
-          s = re.sub(r'(jvmTarget\\s*=\\s*)["\\']1\\.8["\\']', r'\\1"17"', s)
 
-          if "sourceCompatibility" not in s or "targetCompatibility" not in s:
-              block = '''
+          block = """
               compileOptions {
                   sourceCompatibility = JavaVersion.VERSION_17
                   targetCompatibility = JavaVersion.VERSION_17
               }
-              '''
-              m = re.search(r'android\\s*\\{', s)
+          """
+
+          if re.search(r'compileOptions\s*\{', s):
+              s = re.sub(
+                  r'compileOptions\s*\{.*?\}',
+                  block.strip(),
+                  s,
+                  count=1,
+                  flags=re.S
+              )
+          else:
+              m = re.search(r'android\s*\{', s)
               if not m:
-                  raise SystemExit("Could not find android block")
-              s = s[:m.end()] + block + s[m.end():]
+                  raise SystemExit("Android block not found")
+              s = s[:m.end()] + "\n" + block + s[m.end():]
+
+          s = re.sub(
+              r'jvmTarget\s*=\s*["\']1\.8["\']',
+              'jvmTarget = "17"',
+              s
+          )
 
           p.write_text(s)
-          print("Updated app/build.gradle.kts for Java 17.")
+          print("JVM target configuration updated.")
           PY
-          echo "---- JVM settings after patch ----"
-          grep -nE 'sourceCompatibility|targetCompatibility|jvmTarget' "$APP_GRADLE" || true
+
           gradle -p project/radio_alreef_android assembleDebug
 
       - name: Upload APK
