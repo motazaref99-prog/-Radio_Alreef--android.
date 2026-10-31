@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - 'Radio_Alreef_Android_Prototype_v0.5_SectionIdentity.zip'
+      - '3Radio_Alreef_Android_Prototype_v0.5_SectionIdentity_CORRECTED.zip.zip'
       - '.github/workflows/build-android.yml'
 
 permissions:
@@ -33,7 +33,7 @@ jobs:
       - name: Extract project
         run: |
           mkdir -p project
-          unzip -q Radio_Alreef_Android_Prototype_v0.5_SectionIdentity.zip -d project
+          unzip -q 3Radio_Alreef_Android_Prototype_v0.5_SectionIdentity_CORRECTED.zip -d project
 
       - name: Fix JVM targets and build APK
         shell: bash
